@@ -231,7 +231,6 @@ class PositionalEncoding(nn.Module):
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         
         # Calculate the division term for the sine and cosine functions
-        # This is 1 / (10000^(2i/d_model))
         div_term = torch.exp(torch.arange(0, embed_size, 2).float() * (-math.log(10000.0) / embed_size))
         
         # Apply sine to even indices in the array; 2i
@@ -241,29 +240,26 @@ class PositionalEncoding(nn.Module):
         pe[:, 1::2] = torch.cos(position * div_term)
         
         # Add a batch dimension so it can be added to the input embeddings
-        # Shape becomes (1, max_len, embed_size)
         pe = pe.unsqueeze(0)
         
         # Register 'pe' as a buffer. This makes it part of the model's state,
-        # but not a parameter that is trained. It will be saved with the model's state_dict.
+        # but not a parameter that is trained.
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        # x has shape (batch_size, seq_length, embed_size)
         # Add the positional encoding to the input embeddings
-        # self.pe[:, :x.size(1)] selects the encodings up to the max sequence length in the batch
         x = x + self.pe[:, :x.size(1), :]
         return x
-
+    
 
 # ============================
-# Transformer Model
+# Transformer Model (Updated)
 # ============================
 class Transformer(nn.Module):
     def __init__(self, vocab_size, embed_size, num_encoder_layers, num_decoder_layers, heads, forward_expansion, dropout, max_len=5000):
         super(Transformer, self).__init__()
         
-        # Token Embedding and Positional Encoding
+        # New layers for token embedding and positional encoding
         self.token_embedding = nn.Embedding(vocab_size, embed_size)
         self.positional_encoding = PositionalEncoding(embed_size, max_len)
         
@@ -277,10 +273,9 @@ class Transformer(nn.Module):
         return mask
 
     def forward(self, source_tokens, target_tokens):
-        # source_tokens and target_tokens are now token IDs, not embeddings
-        # Shape: (batch_size, seq_length)
+        # The forward pass now starts with token IDs
         
-        # 1. Apply token embeddings and positional encodings
+        # 1. Apply token embeddings and then add positional encodings
         source_embedded = self.dropout(self.positional_encoding(self.token_embedding(source_tokens)))
         target_embedded = self.dropout(self.positional_encoding(self.token_embedding(target_tokens)))
 
@@ -288,7 +283,7 @@ class Transformer(nn.Module):
         target_seq_length = target_tokens.shape[1]
         target_mask = self.generate_mask(target_seq_length).to(target_tokens.device)
 
-        # 3. Pass through Encoder and Decoder
+        # 3. Pass the fully prepared tensors through the Encoder and Decoder
         encoder_output = self.encoder(source_embedded)
         decoder_output = self.decoder(target_embedded, encoder_output, target_mask)
         output = self.final_linear(decoder_output)
@@ -312,7 +307,7 @@ if __name__ == '__main__':
     source_seq_length = 100
     target_seq_length = 120
 
-    # Instantiate the complete model
+    # Instantiate the complete model with the new signature
     model = Transformer(
         vocab_size=vocab_size,
         embed_size=embed_size,
