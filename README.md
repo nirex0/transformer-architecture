@@ -10,7 +10,7 @@ The goal of this project is to provide a clear, modular, and heavily commented c
 
 This implementation faithfully follows the original architectural diagram presented in the paper. The model is composed of a stacked Encoder and Decoder, each containing multiple identical blocks.
 
-*(Image credit: Vaswani et al., 2017)*
+![The Transformer Model Architecture](https://machinelearningmastery.com/wp-content/uploads/2021/08/attention_research_1.png)
 
 -----
 
@@ -53,8 +53,6 @@ Instead of performing attention once, Multi-Head Attention runs the process mult
 #### Positional Encoding (A Critical Note)
 
 Transformers contain no recurrence or convolution, so they have no inherent sense of word order. To fix this, we must inject information about the position of each token in the sequence.
-
-> **Important**: This implementation assumes that **Positional Encodings** have already been added to the input tensors before they are passed to the `forward` method. In a real application, you would create an `Embedding` layer and a `PositionalEncoding` layer and apply them to your raw input token IDs first.
 
 #### Masking
 
